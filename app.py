@@ -24,19 +24,18 @@ os.makedirs(upload_dir, exist_ok=True)
 # === Fase 0: Upload file iniziale ===
 if st.session_state.fase == 0:
     st.header("Step 1: Carica file di partenza")
-    file_iniziale = st.file_uploader("📂 Carica il file Excel da analizzare", type="xlsx")
+    uploaded_file = st.file_uploader("📂 Carica il file Excel da analizzare", type=["xlsx"])
 
-    if file_iniziale:
-        path_input = os.path.join(upload_dir, "input_originale.xlsx")
+    if uploaded_file:
+        path_input = os.path.join(upload_dir, "input_file.xlsx")
         with open(path_input, "wb") as f:
-            f.write(file_iniziale.read())
-
-        st.success("✅ File caricato correttamente.")
+            f.write(uploaded_file.read())
 
         output_clean = os.path.join(upload_dir, "database_pulito.xlsx")
         output_removed = os.path.join(upload_dir, "righe_eliminate.xlsx")
 
         clean_database_with_output(path_input, output_clean, output_removed)
+        st.success("✅ File elaborato correttamente.")
         st.session_state.fase = 1
         st.rerun()
 
