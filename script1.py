@@ -111,9 +111,8 @@ def clean_database_with_output(file_path, output_path_clean, output_path_removed
 
 
 # ===== ESEMPIO DI UTILIZZO =====
-
-input_file = "Database Test.xlsx"
-output_clean = "database_pulito.xlsx"
-output_removed = "righe_eliminate.xlsx"
-
-clean_database_with_output(input_file, output_clean, output_removed)
+if __name__ == "__main__":
+    input_file = "Database Test.xlsx"
+    output_clean = "database_pulito.xlsx"
+    output_removed = "righe_eliminate.xlsx"
+    clean_database_with_output(input_file, output_clean, output_removed)
