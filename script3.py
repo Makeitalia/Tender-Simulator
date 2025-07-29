@@ -29,30 +29,33 @@ def calculate_peso_volumetrico(df, volume_col_index):
 
     return df.apply(peso_vol, axis=1)
 
-# Esempio di utilizzo
-file_path = "database_classificato.xlsx"
-output_path = "database_dimensioni.xlsx"
+def run_script3(file_path, output_path):
+    df = pd.read_excel(file_path, header=None)
 
-df = pd.read_excel(file_path, header=None)
+    # Calcola max dimensione (colonne O=15, P=16, Q=17)
+    df.insert(18, "max_dimensione", "")
+    df.iloc[1, 18] = "max_dimensione"
+    df.iloc[2:, 18] = calculate_max_dimension(df.iloc[2:], 15, 16, 17)
 
-# Calcola max dimensione (colonne O=15, P=16, Q=17)
-df.insert(18, "max_dimensione", "")
-df.iloc[1, 18] = "max_dimensione"
-df.iloc[2:, 18] = calculate_max_dimension(df.iloc[2:], 15, 16, 17)
+    # Elimina colonne O, P, Q (indici 15,16,17)
+    df.drop(df.columns[[15, 16, 17]], axis=1, inplace=True)
 
-# Elimina colonne O, P, Q (indici 15,16,17)
-df.drop(df.columns[[15, 16, 17]], axis=1, inplace=True)
+    # Ricalcola gli indici delle colonne
+    df.columns = range(df.shape[1])
 
-# 🔥 Ricalcola gli indici delle colonne
-df.columns = range(df.shape[1])
+    # Ora puoi usare direttamente gli indici "fisici"
+    volume_col_index = 16
+    peso_volumetrico_index = 17
 
-# Ora puoi usare direttamente gli indici "fisici"
-volume_col_index = 16
-peso_volumetrico_index = 17
+    df.insert(peso_volumetrico_index, "peso volumetrico [kg]", "")
+    df.iloc[1, peso_volumetrico_index] = "peso volumetrico [kg]"
+    df.iloc[2:, peso_volumetrico_index] = calculate_peso_volumetrico(df.iloc[2:], volume_col_index)
 
-df.insert(peso_volumetrico_index, "peso volumetrico [kg]", "")
-df.iloc[1, peso_volumetrico_index] = "peso volumetrico [kg]"
-df.iloc[2:, peso_volumetrico_index] = calculate_peso_volumetrico(df.iloc[2:], volume_col_index)
+    df.to_excel(output_path, index=False, header=False)
+    print("✅ Script 3 completato e file salvato:", output_path)
 
-df.to_excel(output_path, index=False, header=False)
-print("Calcolo completato e file salvato!")
+# === ESEMPIO DI UTILIZZO ===
+if __name__ == "__main__":
+    file_path = "database_classificato.xlsx"
+    output_path = "database_dimensioni.xlsx"
+    run_script3(file_path, output_path)
