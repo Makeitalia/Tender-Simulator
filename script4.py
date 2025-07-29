@@ -9,9 +9,14 @@ def run_script4(input_file, fasce_file, output_file):
     col_peso_volumetrico_index = 17
     col_peso_tassabile_index = 18
 
-    # Leggi le fasce di peso, usando la prima riga come intestazione (header=0)
+    # Leggi le fasce di peso con intestazioni normalizzate
     fasce_df = pd.read_excel(fasce_file, header=0)
-    fasce = fasce_df.values.tolist()
+    fasce_df.columns = [col.strip().lower().replace(".", "").replace(" ", "_") for col in fasce_df.columns]
+
+    try:
+        fasce = fasce_df[["fascia", "min", "max"]].values.tolist()
+    except KeyError:
+        raise ValueError("⚠️ Le colonne del file 'fasce di peso.xlsx' devono chiamarsi 'Fascia', 'Min.' e 'Max.' (con qualsiasi combinazione di maiuscole/minuscole)")
 
     # Aggiungi la colonna "fascia di peso" a destra della colonna "peso tassabile [kg]"
     df_all.insert(col_peso_tassabile_index + 1, "fascia di peso", "")
