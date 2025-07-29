@@ -81,8 +81,7 @@ def classify_flows(file_path, output_path):
     df.to_excel(output_path, index=False, header=False)
     print(f"\n✅ File elaborato e salvato in: {output_path}")
 
-# === ESEMPIO DI UTILIZZO ===
-input_file = "database_pulito.xlsx"
-output_file = "database_classificato.xlsx"
-
-classify_flows(input_file, output_file)
+if __name__ == "__main__":
+    input_file = "database_pulito.xlsx"
+    output_file = "database_classificato.xlsx"
+    classify_flows(input_file, output_file)
