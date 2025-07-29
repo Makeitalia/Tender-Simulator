@@ -11,26 +11,22 @@ def normalize(text):
     return text
 
 def process_geography(file_path, reference_file_path, output_path):
-    # Carica i file Excel
     df = pd.read_excel(file_path, header=None)
     reference_df = pd.read_excel(reference_file_path, sheet_name=None)
     geo_df = reference_df[list(reference_df.keys())[0]]
     continent_df = reference_df[list(reference_df.keys())[1]]
-    postal_df = reference_df[list(reference_df.keys())[2]]  # Terza scheda
+    postal_df = reference_df[list(reference_df.keys())[2]]
 
-    # Preelabora dizionari per ricerca veloce
     lookup_col3 = {normalize(str(row[2])): row[1] for _, row in postal_df.iterrows() if not pd.isna(row[2])}
     lookup_col5 = {normalize(str(row[4])): row[1] for _, row in postal_df.iterrows() if not pd.isna(row[4])}
     lookup_col4 = {normalize(str(row[3])): row[1] for _, row in postal_df.iterrows() if not pd.isna(row[3])}
 
-    # Colonne da usare
     column_H_index = 7
     column_I_index = 11
     column_L_index = 15
     column_M_index = 19
     dest_insert_pos = 16
 
-    # Inserisci le intestazioni mancanti per l'output
     df.insert(8, "provincia/postal code", "")
     df.insert(9, "regione", "")
     df.insert(10, "ripartizione regioni", "")
@@ -64,20 +60,14 @@ def process_geography(file_path, reference_file_path, output_path):
     def get_postal_code(locality, country):
         val_loc = normalize(locality)
         val_country = normalize(country)
-
-        # 1. Se località è uguale al paese → non cercare, ritorna "verificare"
         if val_loc == val_country:
             return "verificare"
-
-        # 2. Match esatto nei dizionari
         if val_loc in lookup_col3:
             return f"{lookup_col3[val_loc]}, {locality}"
         if val_loc in lookup_col5:
             return f"{lookup_col5[val_loc]}, {locality}"
         if val_loc in lookup_col4:
             return f"{lookup_col4[val_loc]}, {locality}"
-
-        # 3. Nessuna corrispondenza trovata
         return "verificare"
 
     def populate_origin_fields(row):
@@ -121,27 +111,22 @@ def process_geography(file_path, reference_file_path, output_path):
                     return cont
         return "verificare"
 
-    # Popola i campi di origine
     df.iloc[2:, [8, 9, 10]] = df.iloc[2:].apply(populate_origin_fields, axis=1)
-
-    # Popola i campi di destinazione
     df.iloc[2:, [dest_insert_pos, dest_insert_pos + 1, dest_insert_pos + 2]] = \
         df.iloc[2:].apply(populate_destination_fields, axis=1)
 
-    # Popola il continente per origine e destinazione
     for i in range(2, len(df)):
         country_orig = df.iat[i, column_I_index]
         country_dest = df.iat[i, column_M_index]
         df.iat[i, 13] = get_continent(country_orig)
         df.iat[i, 21] = get_continent(country_dest)
 
-    # Salva il risultato
     df.to_excel(output_path, index=False, header=False)
-    print(f"File geografico generato: {output_path}")
+    print(f"✅ File geografico generato: {output_path}")
 
-# Esempio di utilizzo
-input_file = "database_fascia di peso.xlsx"
-reference_file = "geografia.xlsx"
-output_file = "database arricchito con geografia.xlsx"
-
-process_geography(input_file, reference_file, output_file)
+# === Protezione per evitare esecuzione automatica su Streamlit ===
+if __name__ == "__main__":
+    input_file = "database_fascia di peso.xlsx"
+    reference_file = "geografia.xlsx"
+    output_file = "database arricchito con geografia.xlsx"
+    process_geography(input_file, reference_file, output_file)
