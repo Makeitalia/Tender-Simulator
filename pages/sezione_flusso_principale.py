@@ -154,3 +154,6 @@ def run_flusso():
 
 # Lancia la sezione 1
 run_flusso()
+
+# Espone la funzione per importazione da app.py o altri moduli
+run = run_flusso
