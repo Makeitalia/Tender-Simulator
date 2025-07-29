@@ -1,100 +1,112 @@
 import streamlit as st
-import os
 import pandas as pd
-import shutil
+import os
 
 from script1 import clean_database_with_output
 from script2 import classify_flows
-from script3 import run_script3  # Wrapper che esegue 03
-from script4 import run_script4  # Wrapper che esegue 04
+from script3 import run_script3
+from script4 import run_script4
 from script5 import process_geography
-from script6 import main as run_script6  # Script finale
+from script6 import main as run_script6
 
-# === Setup iniziale ===
-st.set_page_config(page_title="Workflow Analisi Dati", layout="centered")
-st.title("🧩 Workflow Analisi Dati")
+st.set_page_config(page_title="Workflow Analisi Dati", layout="wide")
 
-# === Stato di sessione ===
-if "fase" not in st.session_state:
-    st.session_state.fase = 0
+# === Sidebar Navigation ===
+menu = st.sidebar.selectbox(
+    "📁 Seleziona un flusso:",
+    [
+        "🏠 Home",
+        "1. Flusso principale (script 1–6)",
+        "2. Analisi supplementare",
+        "3. Reportistica",
+        "4. Validazione finale",
+        "5. Esportazione & salvataggio"
+    ]
+)
 
-upload_dir = "uploaded_files"
-os.makedirs(upload_dir, exist_ok=True)
+# === Home Page ===
+if menu == "🏠 Home":
+    st.title("📦 Tool di Elaborazione Dati Makeitalia")
+    st.markdown("""
+    Benvenuto nel tool automatizzato per l’elaborazione dei dati logistici.
 
-# === Fase 0: Upload file iniziale ===
-if st.session_state.fase == 0:
-    st.header("Step 1: Carica file di partenza")
-    uploaded_file = st.file_uploader("📂 Carica il file Excel da analizzare", type=["xlsx"])
+    ### 📋 Istruzioni:
+    1. Vai alla sezione **"1. Flusso principale"**
+    2. Carica il file Excel da pulire
+    3. Scarica il risultato e le righe eliminate
+    4. (Opzionale) Carica una versione modificata del file pulito
+    5. Inserisci le ragioni sociali richieste
+    6. Avvia la sequenza degli script
+    """)
+
+# === Flusso 1: Script 1 → 6 ===
+elif menu == "1. Flusso principale (script 1–6)":
+    st.title("🧩 Flusso Principale - Script 1 → 6")
+
+    uploaded_file = st.file_uploader("📤 Carica il file Excel da elaborare", type=["xlsx"])
 
     if uploaded_file:
-        path_input = os.path.join(upload_dir, "input_file.xlsx")
-        with open(path_input, "wb") as f:
+        with open("input_file.xlsx", "wb") as f:
             f.write(uploaded_file.read())
 
-        output_clean = os.path.join(upload_dir, "database_pulito.xlsx")
-        output_removed = os.path.join(upload_dir, "righe_eliminate.xlsx")
+        st.success("✅ File caricato correttamente")
 
-        clean_database_with_output(path_input, output_clean, output_removed)
-        st.success("✅ File elaborato correttamente.")
-        st.session_state.fase = 1
-        st.rerun()
+        if st.button("▶️ Avvia Script 1 (pulizia)"):
+            clean_database_with_output("input_file.xlsx", "database_pulito.xlsx", "righe_eliminate.xlsx")
+            st.success("✅ Script 1 completato!")
+            with open("database_pulito.xlsx", "rb") as f1:
+                st.download_button("⬇️ Scarica file pulito", f1, "database_pulito.xlsx")
+            with open("righe_eliminate.xlsx", "rb") as f2:
+                st.download_button("⬇️ Scarica righe eliminate", f2, "righe_eliminate.xlsx")
 
-# === Fase 1: Caricamento opzionale di versione modificata ===
-elif st.session_state.fase == 1:
-    st.header("Step 2: Verifica o modifica il database pulito")
-    st.download_button("📥 Scarica Database Pulito", open(os.path.join(upload_dir, "database_pulito.xlsx"), "rb"), file_name="database_pulito.xlsx")
-    file_modificato = st.file_uploader("🔧 Se hai modificato il file, ricaricalo qui (altrimenti lascia vuoto)", type="xlsx")
+    st.divider()
+    uploaded_modified = st.file_uploader("📤 Carica versione modificata (opzionale)", type=["xlsx"], key="modificato")
+    file_to_use = None
 
-    if file_modificato:
-        path_db = os.path.join(upload_dir, "database_pulito_modificato.xlsx")
-        with open(path_db, "wb") as f:
-            f.write(file_modificato.read())
-    else:
-        path_db = os.path.join(upload_dir, "database_pulito.xlsx")
+    if uploaded_modified:
+        with open("database_modificato.xlsx", "wb") as f:
+            f.write(uploaded_modified.read())
+        file_to_use = "database_modificato.xlsx"
+        st.success("✅ File modificato caricato")
+    elif os.path.exists("database_pulito.xlsx"):
+        file_to_use = "database_pulito.xlsx"
 
-    if st.button("➡️ Procedi con lo script 2-5"):
-        classify_flows(path_db, os.path.join(upload_dir, "database_classificato.xlsx"))
-        run_script3(os.path.join(upload_dir, "database_classificato.xlsx"), os.path.join(upload_dir, "database_dimensioni.xlsx"))
-        run_script4(os.path.join(upload_dir, "database_dimensioni.xlsx"), os.path.join(upload_dir, "database_fascia di peso.xlsx"))
+    if file_to_use:
+        st.markdown("### ✏️ Inserisci le ragioni sociali")
+        inbound_input = st.text_input("INBOUND – scrivi nomi separati da virgola", "")
+        outbound_input = st.text_input("OUTBOUND – scrivi nomi separati da virgola", "")
+        nav_input = st.text_input("NAVETTAGGIO – scrivi nomi separati da virgola", "")
 
-        fasce_ok = os.path.exists("fasce di peso.xlsx")
-        geo_ok = os.path.exists("geografia.xlsx")
-        if not (fasce_ok and geo_ok):
-            st.error("⚠️ Manca 'fasce di peso.xlsx' o 'geografia.xlsx' nella cartella principale. Aggiungili e ricarica l'app.")
-            st.stop()
+        if st.button("🚀 Esegui Script 2 → 6"):
+            inbound = [r.strip() for r in inbound_input.split(",") if r.strip()]
+            outbound = [r.strip() for r in outbound_input.split(",") if r.strip()]
+            nav = [r.strip() for r in nav_input.split(",") if r.strip()]
 
-        process_geography(
-            os.path.join(upload_dir, "database_fascia di peso.xlsx"),
-            "geografia.xlsx",
-            os.path.join(upload_dir, "database arricchito con geografia.xlsx")
-        )
-        st.session_state.fase = 2
-        st.rerun()
+            if not (inbound or outbound or nav):
+                st.error("⚠️ Inserisci almeno una ragione sociale per continuare.")
+                st.stop()
 
-# === Fase 2: Modifica finale opzionale ===
-elif st.session_state.fase == 2:
-    st.header("Step 3: Modifica finale opzionale")
-    st.download_button("📥 Scarica il file finale da modificare", open(os.path.join(upload_dir, "database arricchito con geografia.xlsx"), "rb"), file_name="database_arricchito.xlsx")
-    file_finale = st.file_uploader("🔧 Se hai modificato il file, ricaricalo qui (altrimenti lascia vuoto)", type="xlsx")
+            classify_flows(file_to_use, "database_classificato.xlsx", inbound, outbound, nav)
+            run_script3("database_classificato.xlsx", "database_dimensioni.xlsx")
 
-    if file_finale:
-        path_finale = os.path.join(upload_dir, "database_finale_modificato.xlsx")
-        with open(path_finale, "wb") as f:
-            f.write(file_finale.read())
-    else:
-        path_finale = os.path.join(upload_dir, "database arricchito con geografia.xlsx")
+            if not os.path.exists("fasce di peso.xlsx"):
+                st.error("❌ Manca il file 'fasce di peso.xlsx'. Aggiungilo nella directory.")
+                st.stop()
 
-    if st.button("🚀 Esegui script finale"):
-        shutil.copy(path_finale, "database arricchito con geografia.xlsx")
-        run_script6()
-        st.success("✅ Workflow completato! Scarica i risultati dal file Excel generato.")
-        st.session_state.fase = 3
+            run_script4("database_dimensioni.xlsx", "fasce di peso.xlsx", "database_fascia di peso.xlsx")
 
-# === Fase 3: Fine ===
-elif st.session_state.fase == 3:
-    st.header("✅ Fine del processo")
-    with open("output_tratte_completo.xlsx", "rb") as f:
-        st.download_button("📥 Scarica output finale", f, file_name="output_tratte_completo.xlsx")
-    if st.button("🔄 Ricomincia" ):
-        st.session_state.clear()
-        st.rerun()
+            if not os.path.exists("geografia.xlsx"):
+                st.error("❌ Manca il file 'geografia.xlsx'. Aggiungilo nella directory.")
+                st.stop()
+
+            process_geography("database_fascia di peso.xlsx", "geografia.xlsx", "database arricchito con geografia.xlsx")
+            run_script6()
+
+            st.success("✅ Tutti gli script sono stati eseguiti correttamente!")
+
+            with open("output_tratte_completo.xlsx", "rb") as f:
+                st.download_button("⬇️ Scarica file finale", f, "output_tratte_completo.xlsx")
+
+# === Sezioni non ancora attive ===
+else:
+    st.warning("🚧 Sezione in sviluppo. Torna presto.")
