@@ -15,7 +15,16 @@ sezione = st.sidebar.radio("Seleziona una sezione:", [
 # === Sezioni dinamiche ===
 if sezione == "🏠 Home":
     st.title("📊 Tool Analisi Dati - Makeitalia")
-    st.markdown(\"\"\"\n    Benvenuto nel tool interattivo per l'analisi dei dati di tender.\n\n    **Cosa puoi fare:**\n    - Eseguire passo dopo passo il processo di pulizia, classificazione e arricchimento del database\n    - Scaricare i file intermedi per eventuali verifiche o modifiche\n    - Eseguire script in modo guidato, anche senza conoscenze tecniche\n\n    Usa il menu a sinistra per iniziare 👈\n    \"\"\")
+    st.markdown("""
+    Benvenuto nel tool interattivo per l'analisi dei dati di tender.
+
+    **Cosa puoi fare:**
+    - Eseguire passo dopo passo il processo di pulizia, classificazione e arricchimento del database
+    - Scaricare i file intermedi per eventuali verifiche o modifiche
+    - Eseguire script in modo guidato, anche senza conoscenze tecniche
+
+    Usa il menu a sinistra per iniziare 👈
+    """)
 
 elif sezione == "🛠 1. Flusso principale":
     from pages.sezione_flusso_principale import run as run_flusso
